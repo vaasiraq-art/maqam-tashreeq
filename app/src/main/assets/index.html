@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Maqam Tashreeq Engine — محرك التشريق</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d0f14">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#0d0f14;--pnl:#161a22;--pnl2:#1e2430;--line:#2a3240;--txt:#e8eaf0;--dim:#8b93a5;--acc:#e0a458;--acc2:#5cc0d6;--red:#c0424c;--grn:#4bbf6b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Naskh Arabic",sans-serif;padding:12px;max-width:940px;margin:0 auto}
+h1{font-size:18px;margin:0 0 2px}.sub{color:var(--dim);font-size:12px;margin-bottom:12px}
+.panel{background:var(--pnl);border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:11px}
+.ttl{font-size:13px;font-weight:700;margin-bottom:10px;color:var(--acc)}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:flex-end}
+label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px}
+select,button,input[type=text]{min-height:44px;touch-action:manipulation;background:var(--pnl2);color:var(--txt);border:1px solid var(--line);border-radius:9px;padding:10px 11px;font-size:14px;font-family:inherit}
+.field{flex:1;min-width:140px}
+button.primary{background:var(--acc);color:#1a1206;border:none;font-weight:700;padding:14px;font-size:15px;width:100%}
+button.ghost{background:var(--pnl2);flex:1}
+button.red{background:var(--red);color:#fff;border:none;font-weight:700;flex:1}
+.warn{border-radius:11px;padding:11px;font-size:12.5px;margin-bottom:11px;display:none;line-height:1.55}
+.warn.show{display:block}
+.warn.err{background:#3a1417;border:1px solid var(--red);color:#ffb9be}
+.warn.info{background:#12262e;border:1px solid var(--acc2);color:#bfe8f2}
+.status{font-size:12.5px;color:var(--dim);display:flex;align-items:center;gap:8px;margin-top:10px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--red);flex:none}.dot.on{background:var(--grn);box-shadow:0 0 9px var(--grn)}
+.mon{direction:ltr;min-height:44px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:var(--acc)}
+.mon.idle{font-size:14px;font-weight:500;color:var(--dim)}
+.mon .o{font-size:14px;color:var(--acc2);font-weight:500}
+.meta{direction:ltr;display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);margin-top:6px}
+.scale{direction:ltr;display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
+.dg{background:var(--pnl2);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:11px;text-align:center;min-width:50px}
+.dg .n{font-size:13px;font-weight:700}.dg .c{font-size:9.5px;color:var(--dim)}
+.dg.qt{border-color:var(--acc);color:var(--acc)}
+.note{font-size:11.5px;color:var(--dim);line-height:1.6;margin-top:9px}
+.note b{color:var(--txt)}
+/* tuner */
+.qt{direction:ltr;background:#e8e8e8;border-radius:11px;overflow:hidden;border:1px solid #3a3a3a}
+.qh{background:#1e7a3c;color:#fff;font-size:12.5px;font-weight:600;padding:7px 10px;display:flex;justify-content:space-between}
+.qb{display:flex;padding:8px;gap:8px;background:#c9c9c9}
+.qkb{position:relative;flex:1;height:148px;display:flex}
+.qw{touch-action:none;flex:1;background:#fff;border:1px solid #7a7a7a;border-radius:0 0 4px 4px;position:relative;cursor:pointer}
+.qw.sel{background:#ffe4bd}
+.qk{touch-action:none;position:absolute;top:0;width:9.2%;height:60%;background:#111;border:1px solid #000;border-radius:0 0 3px 3px;z-index:3;transform:translateX(-50%);cursor:pointer}
+.qk.sel{background:#8a5200}
+.mk{position:absolute;left:15%;right:15%;bottom:5px;height:5px;border-radius:3px;background:#e02020;z-index:4}
+.qk .mk{bottom:4px;left:12%;right:12%;background:#ff6a45}
+.lb{position:absolute;bottom:12px;left:0;right:0;text-align:center;font-size:9.5px;color:#666}
+.cv{position:absolute;bottom:25px;left:0;right:0;text-align:center;font-size:10px;font-weight:700;color:#c00}
+.qk .cv{bottom:auto;top:4px;color:#ffcf9a;font-size:9px}
+.qs{width:58px;display:flex;flex-direction:column;gap:6px}
+.qs button{background:#d4d4d4;border:1px solid #8a8a8a;color:#222;border-radius:7px;padding:0;font-size:16px;flex:1}
+.qr{display:flex;gap:5px;padding:0 8px 8px;background:#c9c9c9}
+.qr button{flex:1;background:#9d9d9d;border:1px solid #7a7a7a;color:#111;font-weight:700;font-size:12.5px;padding:10px 0;border-radius:6px}
+.qr button.on{background:#2f2f2f;color:#fff}
+.qr.fine button{font-size:11px;padding:7px 0;background:#b4b4b4}
+.qf{background:#e0e0e0;color:#333;font-size:11px;padding:6px 9px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.qf select,.qf input{background:#fff;color:#111;border:1px solid #999;padding:4px 6px;font-size:11px;border-radius:5px}
+.sl{display:flex;align-items:center;gap:9px;margin-top:9px}
+.sl input[type=range]{flex:1;accent-color:var(--acc)}
+.sl span{font-size:10.5px;color:var(--dim);min-width:82px}
+.igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:6px}
+.igrid button{min-height:52px;touch-action:manipulation;background:var(--pnl2);border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:11px 5px;font-size:12px;line-height:1.35}
+.igrid button.on{background:var(--acc);color:#1a1206;border-color:var(--acc);font-weight:700}
+.igrid button small{display:block;font-size:9.5px;color:var(--dim);margin-top:2px}
+.igrid button.on small{color:#5a3a08}
+.trbox{direction:ltr;display:flex;gap:7px;align-items:stretch}
+.trbox .tb{flex:1;background:var(--pnl2);border:1px solid var(--line);color:var(--txt);font-size:15px;font-weight:700;border-radius:10px;padding:14px 0}
+.trbox .tb.z{background:var(--acc);color:#1a1206;border:none;flex:.7}
+.trval{flex:1.3;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:var(--acc);background:#0a0c10;border:1px solid var(--line);border-radius:10px;min-width:64px}
+.logbox{background:#0a0c10;border:1px solid var(--line);border-radius:9px;padding:9px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10.5px;line-height:1.5;color:#c8d0dc;max-height:230px;overflow:auto;white-space:pre-wrap;word-break:break-word;direction:ltr;text-align:left}
+.logbox .e{color:#ff8a90}.logbox .w{color:#ffcf7a}.logbox .i{color:#7fd6a0}.logbox .m{color:#8b93a5}
+.badge{display:inline-block;background:var(--red);color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-inline-start:6px}
+.sl b{font-size:11px;min-width:38px;text-align:right}
+</style>
+</head>
+<body>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+<h1 id="h1">محرك التشريق</h1>
+<select id="lang" style="min-width:auto;padding:7px 9px"><option value="ar">العربية</option><option value="en">English</option></select>
+</div>
+<div class="sub" id="sub"></div>
+
+<div class="warn err" id="warn"></div>
+<div class="warn err" id="stuck" style="display:none"></div>
+
+
+<div class="panel" id="platPanel">
+  <div class="ttl" id="platT"></div>
+  <div class="warn info show" id="platMsg"></div>
+</div>
+<div class="panel">
+  <button class="primary" id="connect"></button>
+  <div class="status"><span class="dot" id="dot"></span><span id="msg">اضغط اتصال ثم اختر الأجهزة.</span></div>
+  <div class="row" style="margin-top:11px">
+    <div class="field"><label id="lIn"></label><select id="inSel"><option value="">—</option></select></div>
+    <div class="field"><label id="lOut"></label><select id="outSel"><option value="">—</option></select></div>
+  </div>
+  <div class="row" style="margin-top:9px">
+    <div class="field"><label id="lMode"></label><select id="mode">
+      <option value="bend">Pitch-Bend (يعمل مع أغلب الأجهزة)</option>
+      <option value="mts">MTS SysEx (داخل محرك الجهاز)</option>
+    </select></div>
+    <div class="field"><label id="lBR"></label><select id="brange">
+      <option value="1">±1</option><option value="2" selected>±2</option><option value="12">±12</option></select></div>
+    <div class="field"><label id="lNames"></label><select id="naming">
+      <option value="sol">Do Re Mi</option><option value="ar">دو ري مي</option><option value="abc">C D E</option></select></div>
+  </div>
+</div>
+
+
+<div class="panel" style="border-color:var(--acc)">
+  <div class="ttl" id="ksT"></div>
+  <button class="primary" id="bKS"></button>
+  <div class="row" style="margin-top:9px">
+    <button class="red" id="bRestore" style="padding:14px"><span id="restore"></span></button>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <button class="primary" id="bSafeUnplug" style="background:#4bbf6b;color:#06210f"><span id="safeUnplug"></span></button>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <button class="ghost" id="bAuto">Auto-restore: ON</button>
+    <button class="ghost" id="bResetTune"><span id="resetTune"></span></button>
+  </div>
+  <div class="warn info show" id="ksinfo" style="margin-top:10px"></div>
+</div>
+<div class="panel">
+  <div class="mon idle" id="mon"></div>
+  <div class="meta"><span id="cnt">0 notes</span><span id="act">active 0</span><span id="mch">ch —</span></div>
+</div>
+
+<div class="panel">
+  <div class="ttl" id="maqTtl">مقام</div>
+  <div class="row">
+    <div class="field"><label id="lMaq"></label><select id="maqSel"></select></div>
+    <div class="field"><label id="lRoot"></label><select id="rootSel"></select></div>
+  </div>
+  <div class="scale" id="scale"></div>
+  <div class="note" id="maqNote"></div>
+</div>
+
+
+<div class="panel">
+  <div class="ttl" id="trT"></div>
+  <div class="trbox">
+    <button class="tb" id="trM12">−12</button>
+    <button class="tb" id="trM1">−1</button>
+    <div class="trval" id="trBig">0</div>
+    <button class="tb" id="trP1">+1</button>
+    <button class="tb" id="trP12">+12</button>
+    <button class="tb z" id="trZ">0</button>
+  </div>
+  <div class="note" id="trNote"></div>
+</div>
+<div class="panel">
+  <div class="ttl" id="qtT"></div>
+  <div class="qt">
+    <div class="qh"><span id="qhL">Normal · All octaves</span><span id="qhR">&lt;no key&gt;</span></div>
+    <div class="qb">
+      <div class="qkb" id="qkb"></div>
+      <div class="qs">
+        <button id="bSave" title="save">&#128190;</button>
+        <button id="bUndo" title="undo">&#8630;</button>
+        <button id="bReset" title="reset all">&#10006;</button>
+      </div>
+    </div>
+    <div class="qr">
+      <button data-c="-100">-100</button><button data-c="-50">-50</button><button data-c="-25">-25</button>
+      <button data-c="0">0</button>
+      <button data-c="25">+25</button><button data-c="50">+50</button><button data-c="100">+100</button>
+    </div>
+    <div class="qr fine">
+      <button data-d="-5">-5</button><button data-d="-1">-1</button>
+      <button data-d="1">+1</button><button data-d="5">+5</button>
+    </div>
+    <div class="qf">
+      <span id="tName">Default.Template</span>
+      <select id="tSel"><option value="">— templates —</option></select>
+    </div>
+  </div>
+</div>
+
+
+<div class="panel">
+  <div class="ttl" id="devT"></div>
+  <div class="row">
+    <div class="field"><label id="lDev"></label><select id="dev">
+      <option value="casio">Casio WK-7600 / CTK</option>
+      <option value="p125">Yamaha P-125 / P-45 (digital piano)</option>
+      <option value="psr">Yamaha PSR / Genos</option>
+      <option value="korg">Korg PA (oriental)</option>
+      <option value="roland">Roland</option>
+      <option value="gm">Generic GM module</option>
+    </select></div>
+    <div class="field"><label id="lSpan"></label><select id="span">
+      <option value="16">1–16 (full poly)</option>
+      <option value="8">1–8</option>
+      <option value="4">1–4</option>
+      <option value="1">single channel</option>
+    </select></div>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <div class="field"><label id="lWheel"></label><select id="wheel">
+      <option value="1">ON</option><option value="0">OFF</option></select></div>
+    <div class="field"><label id="lWRange"></label><select id="wrange">
+      <option value="1">±1</option><option value="2" selected>±2</option>
+      <option value="4">±4</option><option value="7">±7</option><option value="12">±12</option></select></div>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <button class="ghost" id="bAutoLocal">Auto Local-OFF: ON</button>
+    <button class="ghost" id="bSetBR"><span id="setBR"></span></button>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <button class="ghost" id="bTestCh"><span id="testCh"></span></button>
+    <button class="ghost" id="bTestQT"><span id="testQT"></span></button>
+    <button class="ghost" id="bReapply"><span id="reapply"></span></button>
+  </div>
+  <div class="warn info show" id="dinfo" style="margin-top:10px"></div>
+</div>
+
+<div class="panel">
+  <div class="ttl" id="insT"></div>
+  <div class="igrid" id="igrid"></div>
+  <div class="note" id="insNote"></div>
+</div>
+<div class="panel">
+  <div class="ttl" id="orgT"></div>
+  <div class="row">
+    <div class="field"><label id="lCh"></label><select id="dch"></select></div>
+    <div class="field"><label id="lVoice"></label><select id="dpg"></select></div>
+    <div class="field"><label id="lBank"></label>
+      <div style="display:flex;gap:5px"><select id="dbm" style="min-width:0;flex:1"></select><select id="dbl" style="min-width:0;flex:1"></select></div></div>
+  </div>
+  <div class="sl"><span id="lVol"></span><input type="range" id="c7" min="0" max="127" value="100"><b id="c7v">100</b></div>
+  <div class="sl"><span id="lRev"></span><input type="range" id="c91" min="0" max="127" value="40"><b id="c91v">40</b></div>
+  <div class="sl"><span id="lCho"></span><input type="range" id="c93" min="0" max="127" value="0"><b id="c93v">0</b></div>
+  <div class="sl"><span id="lPan"></span><input type="range" id="c10" min="0" max="127" value="64"><b id="c10v">64</b></div>
+  <div class="sl"><span id="lTr"></span><input type="range" id="tr" min="-12" max="12" value="0"><b id="trv">0</b></div>
+  <div class="sl"><span id="lOc"></span><input type="range" id="oc" min="-3" max="3" value="0"><b id="ocv">0</b></div>
+  <div class="row" style="margin-top:11px">
+    <button class="ghost" id="bLocalOff">Local OFF</button>
+    <button class="ghost" id="bLocalOn">Local ON</button>
+    <button class="red" id="bPanic">PANIC</button>
+  </div>
+  <div class="row" style="margin-top:9px"><button class="primary" id="bMTS"><span id="mtsBtn"></span></button></div>
+  <div class="warn info" id="info" style="margin-top:10px"></div>
+</div>
+
+
+<div class="panel">
+  <div class="ttl"><span id="diagT"></span> <span class="badge" id="errBadge" style="display:none">0</span></div>
+  <div class="logbox" id="log">ready.</div>
+  <div class="row" style="margin-top:9px">
+    <button class="ghost" id="bCopy"><span id="copy"></span></button>
+    <button class="ghost" id="bClear"><span id="clear"></span></button>
+    <button class="ghost" id="bMidiLog">MIDI log: OFF</button>
+    <button class="ghost" id="bSelfTest"><span id="selfTest"></span></button>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <button class="red" id="bMaster" style="padding:13px"><span id="masterR"></span></button>
+  </div>
+  <div class="note" id="diagNote"></div>
+</div>
+
+<script>
+"use strict";
+
+/* ============ DIAGNOSTICS ============ */
+const LOG=[];let errCount=0,midiLog=false;
+function L(lvl,msg){
+  const t=new Date().toISOString().substr(11,12);
+  LOG.push({t,lvl,msg});
+  if(LOG.length>400)LOG.shift();
+  if(lvl==="e"){errCount++;const b=document.getElementById("errBadge");if(b){b.style.display="";b.textContent=errCount;}}
+  drawLog();
+}
+function drawLog(){
+  const box=document.getElementById("log");if(!box)return;
+  box.innerHTML=LOG.slice(-120).map(x=>'<span class="'+x.lvl+'">'+x.t+' '+
+    (x.lvl==="e"?"ERR":x.lvl==="w"?"WRN":x.lvl==="m"?"MID":"INF")+' '+
+    String(x.msg).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]))+'</span>').join("\n");
+  box.scrollTop=box.scrollHeight;
+}
+window.onerror=function(m,src,ln,col,err){
+  L("e","JS "+m+" @"+String(src).split("/").pop()+":"+ln+":"+col+(err&&err.stack?" | "+err.stack.split("\n")[1]:""));
+  return false;
+};
+window.addEventListener("unhandledrejection",e=>L("e","PROMISE "+(e.reason&&e.reason.message||e.reason)));
+function guard(name,fn){return function(){try{return fn.apply(this,arguments);}catch(e){L("e",name+"() "+e.message);}};}
+
+
+/* ============ LANGUAGE ============ */
+let lang="ar";
+const TXT={
+ title:{en:"Maqam Tashreeq Engine",ar:"محرك التشريق"},
+ sub:{en:"MIDI controller only — your device plays the sound",ar:"لوحة تحكم MIDI فقط — الصوت يخرج من جهازك"},
+ connect:{en:"① Connect MIDI",ar:"① اتصال بـ MIDI"},
+ hint0:{en:"Tap Connect, then choose your devices.",ar:"اضغط اتصال ثم اختر الأجهزة."},
+ lIn:{en:"MIDI IN · your keyboard",ar:"MIDI IN · الكيبورد"},
+ lOut:{en:"MIDI OUT · your device (required)",ar:"MIDI OUT · الأورغ (مطلوب)"},
+ lMode:{en:"Tuning mode",ar:"وضع التشريق"},
+ lBR:{en:"Bend range",ar:"نطاق البِند"},
+ lNames:{en:"Note names",ar:"أسماء النغمات"},
+ ksT:{en:"Keyboard + Speaker Mode",ar:"وضع لوحة المفاتيح والسماعة"},
+ ksOn:{en:"🎹 Turn ON — device becomes keyboard + speaker only",ar:"🎹 تشغيل الوضع — الجهاز يصبح لوحة مفاتيح وسماعة فقط"},
+ ksOff:{en:"⏹ Turn OFF — restore device to normal",ar:"⏹ إيقاف الوضع — الجهاز يرجع طبيعياً"},
+ restore:{en:"↩︎ RESTORE DEVICE",ar:"↩︎ إرجاع الجهاز لوضعه الطبيعي"},
+ autoR:{en:"Auto-restore: ",ar:"إرجاع تلقائي: "},
+ resetTune:{en:"Reset device tuning",ar:"مسح تشريق الجهاز"},
+ maqT:{en:"Maqam",ar:"المقام"},
+ lMaq:{en:"Maqam",ar:"المقام"},
+ lRoot:{en:"Root key",ar:"القرار"},
+ qtT:{en:"Q.T. Tashreeq — manual tuning",ar:"التشريق اليدوي"},
+ devT:{en:"Device Setup",ar:"إعداد الجهاز"},
+ lDev:{en:"Device preset",ar:"نوع الجهاز"},
+ lSpan:{en:"Bend channels",ar:"قنوات البِند"},
+ setBR:{en:"Set bend range on device",ar:"ضبط نطاق البِند بالجهاز"},
+ testCh:{en:"Test channels",ar:"اختبار القنوات"},
+ testQT:{en:"Test tashreeq (A/B)",ar:"اختبار التشريق (A/B)"},
+ orgT:{en:"Device Control",ar:"تحكم الجهاز"},
+ lCh:{en:"Channel",ar:"القناة"},
+ lVoice:{en:"Voice (Program)",ar:"الصوت"},
+ lBank:{en:"Bank M / L",ar:"البنك M / L"},
+ lVol:{en:"Volume CC7",ar:"الفوليوم CC7"},
+ lRev:{en:"Reverb CC91",ar:"الريفيرب CC91"},
+ lCho:{en:"Chorus CC93",ar:"الكوراس CC93"},
+ lPan:{en:"Pan CC10",ar:"البان CC10"},
+ lTr:{en:"Transpose",ar:"ترانسبوز"},
+ lOc:{en:"Octave",ar:"أوكتاف"},
+ mts:{en:"♩ Send tuning into device (MTS)",ar:"♩ إرسال التشريق داخل الجهاز (MTS)"},
+ diagT:{en:"Diagnostics",ar:"صفحة الأخطاء"},
+ copy:{en:"📋 Copy report",ar:"📋 نسخ التقرير"},
+ clear:{en:"Clear",ar:"مسح"},
+ selfTest:{en:"Self test",ar:"فحص ذاتي"},
+ diagNote:{en:"If something goes wrong: tap <b>Copy report</b> and paste it in the chat.",ar:"إذا واجهتك مشكلة: اضغط <b>نسخ التقرير</b> والصقه في المحادثة."},
+ waiting:{en:"waiting for notes…",ar:"في انتظار النوتات…"},
+ noOut:{en:"⚠️ No <b>MIDI OUT</b> selected. This app makes no sound by itself — pick your device or you will hear nothing.",
+        ar:"⚠️ لا يوجد <b>MIDI OUT</b>. التطبيق لا يصدر صوتاً بنفسه — اختر جهازك وإلا لن تسمع شيئاً."},
+ notSecure:{en:"⚠️ Opened as a local file — MIDI will not work. An <b>https://</b> link is required.",
+            ar:"⚠️ فتحت الملف محلياً — MIDI لن يعمل. لازم رابط <b>https://</b>."},
+ ksInfo:{en:"This mode mutes the device's own engine so it becomes a keyboard + speaker.<br><b>Safety:</b> the app restores your device automatically on close, exit, cable unplug, or idle. And a power cycle always restores it. Nothing is written to the device's permanent memory.",
+         ar:"هذا الوضع يفصل صوت الجهاز الداخلي فيصبح لوحة مفاتيح وسماعة فقط.<br><b>الأمان:</b> التطبيق يُرجع الجهاز تلقائياً عند الإغلاق أو الخروج أو فصل الكابل أو الخمول. وإطفاء الجهاز وإشعاله يرجعه دائماً. لا يوجد أي تعديل دائم على ذاكرته."},
+ ksDone:{en:"✅ Active: the device's internal sound is disconnected — only the tuned note is heard, no doubling.<br>Press <b>RESTORE DEVICE</b> when finished.",
+         ar:"✅ الوضع يعمل: صوت الجهاز الداخلي مفصول — الصوت الخارج هو النغمة المُشرَّقة فقط بلا ازدواج.<br>عند الانتهاء اضغط <b>إرجاع الجهاز</b>."},
+ restored:{en:"↩︎ Device restored: internal sound ON, bend range ±2, all notes off. Exactly as before.",
+           ar:"↩︎ تم إرجاع الجهاز: الصوت الداخلي يعمل، نطاق البِند ±2، كل النوتات موقوفة. كما كان تماماً."},
+ needOut:{en:"⚠️ Select <b>MIDI OUT</b> first — without it there is no sound.",ar:"⚠️ اختر <b>MIDI OUT</b> أولاً — بدونه لن يخرج صوت."},
+ playKeys:{en:"Play: <b>%s</b><br>Yellow notes are auto-tuned (¼ tone).",ar:"اعزف: <b>%s</b><br>النوتات الصفراء مُشرَّقة تلقائياً (¼ تون)."},
+ noQT:{en:"<b>⚠ This maqam needs no tashreeq</b> — all its notes already exist in Western tuning, so you will hear no tuning change. The difference is entirely in <b>which keys you play</b>:<br><b>%s</b>",
+       ar:"<b>⚠ هذا المقام لا يحتاج تشريق</b> — كل نغماته موجودة في السلّم الغربي، فلن تسمع تغييراً في الضبط. الفرق كله في <b>المفاتيح التي تعزفها</b>:<br><b>%s</b>"},
+ sameAs:{en:"<br>Same structure as <b>%s</b>, different root.",ar:"<br>بنيته نفس <b>%s</b> لكن على قرار مختلف."},
+ askOverwrite:{en:"You have manual tashreeq edits. Replace them with this maqam's preset?",ar:"لديك تشريق يدوي. هل تستبدله بإعداد هذا المقام؟"},
+ pickKey:{en:"pick a key first",ar:"اختر مفتاحاً أولاً"},
+ noKey:{en:"<no key>",ar:"<لا مفتاح>"},
+ allOct:{en:"Normal · All octaves",ar:"عادي · كل الأوكتافات"},
+ tplName:{en:"Template name:",ar:"اسم القالب:"},
+ disc:{en:"⚠️ Device disconnected. If its keys stay silent: power it off and on — it returns to normal instantly.",ar:"⚠️ فُصل الجهاز. إن بقيت مفاتيحه بلا صوت: أطفئه وأشعله — يرجع طبيعياً فوراً."},
+ needSysex:{en:"Resetting tuning inside the device needs MIDI OUT with SysEx permission.",ar:"لإرجاع التشريق داخل الجهاز يلزم MIDI OUT مع إذن SysEx."},
+ tuneReset:{en:"Sent an equal-temperament table to restore the device's original tuning.",ar:"تم إرسال جدول ضبط متساوٍ لإرجاع نغمات الجهاز لأصلها."},
+ idleR:{en:"⏱ No playing for 5 minutes — device restored automatically for safety. Turn the mode on to continue.",ar:"⏱ لم يصلني عزف منذ ٥ دقائق — أُرجع الجهاز تلقائياً حمايةً له. اضغط تشغيل الوضع للمتابعة."},
+ trT:{en:"Transpose",ar:"الترانسبوز"},
+ trNote:{en:"Shift: <b>%s</b> semitones — pressing <b>%k</b> now sounds <b>%r</b>. Tashreeq follows the sounding pitch.",
+         ar:"الإزاحة: <b>%s</b> نصف درجة — ضغط <b>%k</b> يصدر الآن <b>%r</b>. التشريق يتبع النغمة الخارجة."},
+ masterR:{en:"⟲ RESET EVERYTHING",ar:"⟲ إعادة ضبط كل شيء"},
+ askReset:{en:"Reset all app settings to defaults? Saved templates are kept.",ar:"إعادة ضبط كل إعدادات التطبيق؟ القوالب المحفوظة تبقى."},
+ resetDone:{en:"⟲ Everything reset to defaults. Saved templates were kept.",ar:"⟲ أُعيد ضبط كل شيء. القوالب المحفوظة لم تُمسّ."},
+ safeUnplug:{en:"✅ SAFE UNPLUG — restore, then remove the cable",ar:"✅ فصل آمن — أرجِع الجهاز ثم اسحب الكابل"},
+ safeNow:{en:"✅ Device restored. You can unplug the cable now — its keys will sound normally.",
+          ar:"✅ تم إرجاع الجهاز. تقدر تسحب الكابل الآن — مفاتيحه ستصدر صوتاً طبيعياً."},
+ noPortUnplug:{en:"No device connected — nothing to restore.",ar:"لا يوجد جهاز موصول — لا شيء لإرجاعه."},
+ stuckMsg:{en:"⚠️ <b>The cable was removed while the device engine was muted.</b> Its keys are silent right now — this is not damage.<br><b>Fix, either way:</b> switch the instrument off and on again, <b>or</b> plug the cable back in and this app will unmute it instantly.",
+           ar:"⚠️ <b>سُحب الكابل وصوت الجهاز الداخلي مطفأ.</b> مفاتيحه صامتة الآن — وهذا ليس عطلاً.<br><b>الحل، بأي طريقة:</b> أطفئ الآلة وأشعلها، <b>أو</b> أعد توصيل الكابل وسيعيد التطبيق تشغيل صوتها فوراً."},
+ healed:{en:"✅ Device reconnected and its internal sound was switched back on automatically.",
+         ar:"✅ أُعيد توصيل الجهاز وتم إرجاع صوته الداخلي تلقائياً."},
+ platT:{en:"Platform & MIDI support",ar:"دعم المنصّة و MIDI"},
+ pOKand:{en:"✅ <b>Android — fully supported.</b> Connect your instrument with a USB-OTG adapter (or Bluetooth MIDI), then tap Connect MIDI. Use Chrome, Edge, Opera or Samsung Internet.",
+         ar:"✅ <b>أندرويد — مدعوم بالكامل.</b> وصّل آلتك بوصلة USB-OTG (أو بلوتوث MIDI) ثم اضغط اتصال. استخدم Chrome أو Edge أو Opera أو Samsung Internet."},
+ pOKdesk:{en:"✅ <b>Desktop — fully supported.</b> Chrome, Edge and Opera work out of the box; Firefox 108+ needs its MIDI permission add-on.",
+          ar:"✅ <b>كمبيوتر — مدعوم بالكامل.</b> Chrome و Edge و Opera تعمل مباشرة؛ Firefox 108+ يحتاج إضافة إذن MIDI."},
+ pOKios:{en:"✅ <b>iOS via Web MIDI Browser — working.</b> This app is running inside the MIDI-capable browser, so your instrument will be detected. Connect it with a Lightning/USB-C camera adapter or Bluetooth MIDI.",
+         ar:"✅ <b>آيفون عبر Web MIDI Browser — يعمل.</b> التطبيق يعمل داخل متصفح يدعم MIDI، وسيتعرّف على آلتك. وصّلها بوصلة الكاميرا أو ببلوتوث MIDI."},
+ pIOS:{en:"⚠️ <b>iPhone / iPad — Safari cannot do MIDI.</b> Apple has never implemented the Web MIDI API and there is no announced plan to, and every iOS browser (Chrome, Firefox, Edge) is Safari underneath, so switching browsers will not help.<br><br><b>The workaround:</b> install the free <b>Web MIDI Browser</b> app from the App Store, then open this page inside it — everything works normally. Connect your instrument with a Lightning/USB-C camera adapter or Bluetooth MIDI.",
+       ar:"⚠️ <b>آيفون / آيباد — سفاري لا يدعم MIDI.</b> آبل لم تطبّق Web MIDI أبداً ولا يوجد خطة معلنة لذلك، وكل متصفحات iOS (كروم، فايرفوكس، إيدج) تعمل على سفاري داخلياً — فتغيير المتصفح لن يفيد.<br><br><b>الحل:</b> نزّل تطبيق <b>Web MIDI Browser</b> المجاني من App Store وافتح هذه الصفحة بداخله — كل شيء يعمل طبيعياً. وصّل آلتك بوصلة الكاميرا أو ببلوتوث MIDI."},
+ pNotSecure:{en:"⚠️ <b>Not a secure page.</b> On phones, Web MIDI only runs over <b>https://</b>. Host this file and open the https link.",
+             ar:"⚠️ <b>الصفحة ليست آمنة.</b> على الهواتف لا تعمل Web MIDI إلا عبر <b>https://</b>. ارفع الملف وافتح الرابط الآمن."},
+ pNoMIDI:{en:"⚠️ <b>This browser has no Web MIDI.</b> Use Chrome, Edge, Opera or Samsung Internet. Firefox 108+ works with its MIDI permission add-on.",
+          ar:"⚠️ <b>هذا المتصفح لا يدعم Web MIDI.</b> استخدم Chrome أو Edge أو Opera أو Samsung Internet. فايرفوكس 108+ يعمل بإضافة إذن MIDI."},
+ lWheel:{en:"Pitch wheel / bend",ar:"عجلة البِند من الجهاز"},
+ lWRange:{en:"Wheel range",ar:"مدى العجلة"},
+ wheelOn:{en:"Pitch wheel <b>enabled</b>: your instrument's bend wheel is merged with the tashreeq, so both stay correct at once. The device bend range is raised automatically to fit both.",
+          ar:"عجلة البِند <b>مفعّلة</b>: انحناء العجلة من آلتك يُدمج مع التشريق فيبقى الاثنان صحيحين معاً. نطاق البِند في الجهاز يُرفع تلقائياً ليتسع لهما."},
+ wheelOff:{en:"Pitch wheel <b>disabled</b>: bend messages from the instrument are ignored, tashreeq only.",
+           ar:"عجلة البِند <b>معطّلة</b>: يتم تجاهل انحناء العجلة، التشريق فقط."},
+ insT:{en:"Quick Instruments",ar:"الآلات السريعة"},
+ reapply:{en:"Re-apply voice to all channels",ar:"إعادة الصوت لكل القنوات"},
+ reapplied:{en:"Voice re-sent to every channel used for notes. If you still hear two different sounds, your device has a Layer/Dual voice enabled on its own panel — turn it off there.",
+            ar:"أُعيد إرسال الصوت لكل القنوات. إن بقي هناك صوتان مختلفان، فجهازك مفعّل عليه <b>Layer / Dual</b> من لوحته — أطفئه من الآلة نفسها."},
+ insNote:{en:"These are General-MIDI voices. Your device's own oriental voices (qanun, oud, ney, mizmar) usually live in a separate <b>Bank</b> — set Bank M/L below, then pick the program number from your device's voice list.",
+          ar:"هذه أصوات General MIDI. الأصوات الشرقية الخاصة بجهازك (قانون، عود، ناي، مزمار) تكون عادة في <b>بنك</b> منفصل — اضبط Bank M/L بالأسفل ثم اختر رقم الصوت من قائمة جهازك."},
+ midiLog:{en:"MIDI log: ",ar:"سجل MIDI: "}
+};
+function T(k){const v=TXT[k];return v?(v[lang]||v.en):k;}
+const SETTXT=[["h1","title"],["sub","sub"],["connect","connect"],["lIn","lIn"],["lOut","lOut"],
+ ["lMode","lMode"],["lBR","lBR"],["lNames","lNames"],["ksT","ksT"],["restore","restore"],
+ ["resetTune","resetTune"],["lMaq","lMaq"],["lRoot","lRoot"],["qtT","qtT"],["devT","devT"],
+ ["lDev","lDev"],["lSpan","lSpan"],["setBR","setBR"],["testCh","testCh"],["testQT","testQT"],
+ ["orgT","orgT"],["lCh","lCh"],["lVoice","lVoice"],["lBank","lBank"],["lVol","lVol"],["lRev","lRev"],
+ ["lCho","lCho"],["lPan","lPan"],["lTr","lTr"],["lOc","lOc"],["mtsBtn","mts"],["diagT","diagT"],
+ ["copy","copy"],["clear","clear"],["selfTest","selfTest"],["trT","trT"],["masterR","masterR"],["insT","insT"],["reapply","reapply"],["safeUnplug","safeUnplug"],["platT","platT"],["lWheel","lWheel"],["lWRange","lWRange"]];
+function setLang(l){
+  lang=l;
+  document.documentElement.lang=l;
+  document.documentElement.dir = l==="ar" ? "rtl" : "ltr";
+  SETTXT.forEach(([id,k])=>{const e=document.getElementById(id);if(e)e.textContent=T(k);});
+  const dn=document.getElementById("diagNote");if(dn)dn.innerHTML=T("diagNote");
+  const ins=document.getElementById("insNote");if(ins)ins.innerHTML=T("insNote");
+  if(typeof drawInstr==="function")drawInstr();
+  if(typeof showPlatform==="function")showPlatform();
+  document.getElementById("bKS").textContent = ksOn?T("ksOff"):T("ksOn");
+  document.getElementById("bAuto").textContent = T("autoR")+(autoRestore?"ON":"OFF");
+  document.getElementById("bMidiLog").textContent = T("midiLog")+(midiLog?"ON":"OFF");
+  if(!ksOn) ksMsg(T("ksInfo"));
+  if(!outPort) checkOut();
+  const mo=document.getElementById("mon"); if(mo.classList.contains("idle"))mo.textContent=T("waiting");
+  fillMaq();renderMaqam();head();if(typeof setTranspose==="function")setTranspose(transpose,false);
+  try{localStorage.setItem("qt_lang",l);}catch(e){}
+}
+
+/* ============ NAMING ============ */
+const ABC=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const SOL=["Do","Do#","Re","Re#","Mi","Fa","Fa#","Sol","Sol#","La","La#","Si"];
+const ARB=["دو","دو#","ري","ري#","مي","فا","فا#","صول","صول#","لا","لا#","سي"];
+let naming="sol";
+const nm=pc=>{pc=((pc%12)+12)%12;return naming==="abc"?ABC[pc]:naming==="ar"?ARB[pc]:SOL[pc];};
+
+/* ============ MAQAMAT (verified: [semitone-from-root-key, cents]) ============ */
+const FAM={rast:{en:"Rast family",ar:"فصيلة الرست"},bayati:{en:"Bayati family",ar:"فصيلة البياتي"},
+ saba:{en:"Saba family",ar:"فصيلة الصبا"},sikah:{en:"Sikah family",ar:"فصيلة السيكاه"},
+ hijaz:{en:"Hijaz family",ar:"فصيلة الحجاز"},nahawand:{en:"Nahawand family",ar:"فصيلة النهاوند"},
+ kurd:{en:"Kurd family",ar:"فصيلة الكرد"},ajam:{en:"Ajam family",ar:"فصيلة العجم"},
+ athar:{en:"Nawa Athar family",ar:"فصيلة نوى أثر"},other:{en:"Other",ar:"أخرى"}};
+const FAMORDER=["rast","bayati","saba","sikah","hijaz","nahawand","kurd","ajam","athar","other"];
+const MAQAMAT=[
+ /* ── فصيلة الرست ── */
+ {en:"Rast",ar:"رست",fam:"rast",root:0,d:[[0,0],[2,0],[4,-50],[5,0],[7,0],[9,0],[11,-50]]},
+ {en:"Suznak",ar:"سوزناك",fam:"rast",root:0,d:[[0,0],[2,0],[4,-50],[5,0],[7,0],[8,0],[11,0]]},
+ {en:"Mahur",ar:"ماهور",fam:"rast",root:0,d:[[0,0],[2,0],[4,-50],[5,0],[7,0],[9,0],[11,0]]},
+ {en:"Jiharkah",ar:"جهاركاه",fam:"rast",root:5,d:[[0,0],[2,0],[4,0],[5,0],[7,0],[9,0],[11,-50]]},
+ /* ── فصيلة البياتي ── */
+ {en:"Bayati",ar:"بياتي",fam:"bayati",root:2,d:[[0,0],[2,-50],[3,0],[5,0],[7,0],[8,0],[10,0]]},
+ {en:"Bayati Shuri",ar:"بياتي شوري",fam:"bayati",root:2,d:[[0,0],[2,-50],[3,0],[6,0],[7,0],[8,0],[10,0]]},
+ /* ── فصيلة الصبا ── */
+ {en:"Saba",ar:"صبا",fam:"saba",root:2,d:[[0,0],[2,-50],[3,0],[4,0],[7,0],[8,0],[10,0]]},
+ {en:"Saba Zamzam",ar:"صبا زمزم",fam:"saba",root:2,pure:1,d:[[0,0],[1,0],[3,0],[4,0],[7,0],[8,0],[10,0]]},
+ /* ── فصيلة السيكاه ── */
+ {en:"Sikah",ar:"سيكاه",fam:"sikah",root:4,d:[[0,-50],[1,0],[3,0],[5,0],[6,0],[8,0],[10,0]]},
+ {en:"Huzam",ar:"هزام",fam:"sikah",root:4,d:[[0,-50],[1,0],[3,0],[4,0],[7,0],[8,0],[10,0]]},
+ {en:"Mustaar",ar:"مستعار",fam:"sikah",root:4,d:[[0,-50],[2,0],[3,0],[5,0],[7,0],[8,0],[10,0]]},
+ {en:"Iraq",ar:"عراق",fam:"sikah",root:11,eq:"Mustaar",d:[[0,-50],[2,0],[3,0],[5,0],[7,0],[8,0],[10,0]]},
+ /* ── فصيلة الحجاز ── */
+ {en:"Hijaz",ar:"حجاز",fam:"hijaz",root:2,pure:1,d:[[0,0],[1,0],[4,0],[5,0],[7,0],[8,0],[10,0]]},
+ {en:"Hijazkar",ar:"حجازكار",fam:"hijaz",root:0,pure:1,d:[[0,0],[1,0],[4,0],[5,0],[7,0],[8,0],[11,0]]},
+ {en:"Shad Araban",ar:"شد عربان",fam:"hijaz",root:7,pure:1,eq:"Hijazkar",d:[[0,0],[1,0],[4,0],[5,0],[7,0],[8,0],[11,0]]},
+ {en:"Hijazkar Kurd",ar:"حجازكار كرد",fam:"hijaz",root:0,pure:1,d:[[0,0],[1,0],[3,0],[5,0],[7,0],[8,0],[11,0]]},
+ /* ── فصيلة النهاوند ── */
+ {en:"Nahawand",ar:"نهاوند",fam:"nahawand",root:0,pure:1,d:[[0,0],[2,0],[3,0],[5,0],[7,0],[8,0],[10,0]]},
+ {en:"Farahfaza",ar:"فرحفزا",fam:"nahawand",root:7,pure:1,eq:"Nahawand",d:[[0,0],[2,0],[3,0],[5,0],[7,0],[8,0],[10,0]]},
+ /* ── فصيلة الكرد ── */
+ {en:"Kurd",ar:"كرد",fam:"kurd",root:2,pure:1,d:[[0,0],[1,0],[3,0],[5,0],[7,0],[8,0],[10,0]]},
+ /* ── فصيلة العجم ── */
+ {en:"Ajam",ar:"عجم",fam:"ajam",root:10,pure:1,d:[[0,0],[2,0],[4,0],[5,0],[7,0],[9,0],[11,0]]},
+ /* ── فصيلة نوى أثر ── */
+ {en:"Nikriz",ar:"نكريز",fam:"athar",root:0,pure:1,d:[[0,0],[2,0],[3,0],[6,0],[7,0],[9,0],[10,0]]},
+ {en:"Nawa Athar",ar:"نوى أثر",fam:"athar",root:0,pure:1,d:[[0,0],[2,0],[3,0],[6,0],[7,0],[8,0],[11,0]]},
+ {en:"Athar Kurd",ar:"أثر كرد",fam:"athar",root:0,pure:1,d:[[0,0],[1,0],[3,0],[6,0],[7,0],[9,0],[10,0]]},
+ /* ── أخرى ── */
+ {en:"No Tashreeq",ar:"بدون تشريق (غربي)",fam:"other",root:0,pure:1,eq:"Ajam",d:[[0,0],[2,0],[4,0],[5,0],[7,0],[9,0],[11,0]]}
+];
+
+let maqIdx=0, rootPc=0;
+let cents=new Array(12).fill(0);   // tashreeq table per pitch-class (absolute)
+let undoS=[];
+
+let manualEdit=false;
+function applyMaqam(force){
+  if(manualEdit && !force){
+    if(!confirm(T("askOverwrite"))){ return false; }
+  }
+  const M=MAQAMAT[maqIdx];
+  cents=new Array(12).fill(0);
+  M.d.forEach(([s,c])=>{ if(c) cents[((rootPc+s)%12+12)%12]=c; });
+  manualEdit=false; undoS.push([...cents]);
+  L("i","maqam applied: "+M.en+" root "+nm(rootPc));
+  return true;
+}
+const centsOf=m=>cents[((m%12)+12)%12];
+
+/* ============ MIDI ============ */
+let access=null,sysexOK=false,inPort=null,outPort=null;
+/* iOS "Web MIDI Browser" ships an older spec shim where inputs/outputs are
+   arrays or functions instead of Maps — normalise all three shapes. */
+function portArr(kind){
+  if(!access)return [];
+  let c=access[kind];
+  if(typeof c==="function"){try{c=access[kind]();}catch(e){return [];}}
+  if(!c)return [];
+  if(typeof c.forEach==="function"&&typeof c.size==="number"){const a=[];c.forEach(p=>a.push(p));return a;}
+  if(Array.isArray(c))return c.slice();
+  if(typeof c.length==="number")return Array.prototype.slice.call(c);
+  const a=[];try{c.forEach(p=>a.push(p));}catch(e){}
+  return a;
+}
+function portGet(kind,id){
+  const c=access&&access[kind];
+  if(c&&typeof c.get==="function"){const p=c.get(id);if(p)return p;}
+  return portArr(kind).find(p=>String(p.id)===String(id))||null;
+}
+let mode="bend",bendRange=2,dch=0,transpose=0,octave=0;
+const held=new Map();            // srcNote -> {note, ch}
+let pool=[],count=0;
+
+function el(i){return document.getElementById(i);}
+function stat(on,t){el("dot").classList.toggle("on",on);el("msg").textContent=t;}
+function tx(b){ if(!outPort){if(midiLog)L("w","tx blocked: no MIDI OUT");return false;}
+  try{outPort.send(b); if(midiLog)L("m","tx "+b.slice(0,4).map(x=>x.toString(16).padStart(2,"0")).join(" ")+(b.length>4?" …"+b.length:"")); return true;}
+  catch(e){L("e","tx failed: "+e.message);return false;} }
+
+function resetPool(){
+  pool = (mode==="bend") ? (typeof spanList==="function"?spanList().slice():[dch]) : [dch];
+  if(mode==="bend"){
+    pool.forEach(ch=>{
+      tx([0xB0|ch,101,0]);tx([0xB0|ch,100,0]);
+      tx([0xB0|ch,6,bendRange]);tx([0xB0|ch,38,0]);
+      tx([0xB0|ch,101,127]);tx([0xB0|ch,100,127]);
+      tx([0xE0|ch,0,64]);
+    });
+  }
+}
+/* ---- pitch wheel from the instrument, merged with tashreeq ---- */
+let wheelOn=true, wheelRange=2, wheelRaw=0;
+const wheelCents=()=> wheelOn ? (wheelRaw/8192)*wheelRange*100 : 0;
+function needRange(){ return wheelOn ? Math.min(12,wheelRange+1) : 2; }
+function sendBend(ch,c){const v=bendVal(c);tx([0xE0|ch,v&0x7f,(v>>7)&0x7f]);}
+function refreshBends(){
+  const w=wheelCents();
+  held.forEach(h=>sendBend(h.ch, centsOf(h.n)+w));
+  if(mode==="bend")pool.forEach(ch=>sendBend(ch,w));   // idle channels ready for next note
+}
+function setWheel(raw){
+  wheelRaw=Math.max(-8192,Math.min(8191,raw));
+  if(!wheelOn){ if(mode!=="bend")tx([0xE0|dch,(wheelRaw+8192)&0x7f,((wheelRaw+8192)>>7)&0x7f]); return; }
+  refreshBends();
+}
+let brWarned=false;
+function bendVal(c){
+  if(Math.abs(c)>bendRange*100){
+    if(!brWarned){brWarned=true;L("w","cents "+c+" exceeds bend range ±"+(bendRange*100)+" — raise Bend range");}
+    c=Math.sign(c)*bendRange*100;
+  }
+  const v=Math.round(8192+(c/(bendRange*100))*8192);
+  return Math.max(0,Math.min(16383,v));
+}
+function noteOn(src,vel){
+  const n=Math.max(0,Math.min(127,src+transpose+octave*12));
+  if(held.has(src))noteOff(src);
+  let ch;
+  if(mode==="bend"){
+    ch = pool.length ? pool.shift() : dch;
+    sendBend(ch, centsOf(n)+wheelCents());
+  } else { ch=dch; if(wheelOn)sendBend(ch,wheelCents()); }
+  tx([0x90|ch,n,vel]);
+  held.set(src,{n,ch});
+  count++; show(n,vel,ch); upd(); if(typeof armIdle==="function")armIdle();
+}
+function noteOff(src){
+  const h=held.get(src); if(!h)return;
+  tx([0x80|h.ch,h.n,0]);
+  held.delete(src);
+  if(mode==="bend"&&pool.indexOf(h.ch)<0)pool.push(h.ch);
+  upd();
+}
+function panic(){
+  held.clear(); wheelRaw=0;
+  for(let ch=0;ch<16;ch++){tx([0xB0|ch,64,0]);tx([0xB0|ch,123,0]);tx([0xB0|ch,120,0]);tx([0xE0|ch,0,64]);}
+  resetPool();upd();
+}
+function upd(){el("act").textContent="active "+held.size;el("cnt").textContent=count+" notes";}
+function show(n,vel,ch){
+  const c=centsOf(n),mo=el("mon");mo.classList.remove("idle");
+  mo.innerHTML=nm(n)+Math.floor(n/12-1)+' <span class="o">'+(c?(c>0?"+":"")+c+"¢":"0¢")+' · vel '+vel+'</span>';
+  el("mch").textContent="ch "+(ch+1);
+}
+function onMidi(e){
+  const [st,a,b]=e.data,cmd=st&0xf0;
+  if(midiLog)L("m","rx "+Array.from(e.data).slice(0,3).map(x=>x.toString(16).padStart(2,"0")).join(" "));
+  if(cmd===0x90&&b>0)noteOn(a,b);
+  else if(cmd===0x80||(cmd===0x90&&b===0))noteOff(a);
+  else if(cmd===0xB0){
+    if(a===123||a===120)panic();
+    else if(mode==="bend"){spanList().forEach(ch=>tx([0xB0|ch,a,b]));}
+    else tx([0xB0|dch,a,b]);
+  }
+  else if(cmd===0xE0){ setWheel(((b<<7)|a)-8192); }
+  else if(cmd===0xD0){ (mode==="bend"?spanList():[dch]).forEach(ch=>tx([0xD0|ch,a])); }
+  else if(cmd===0xA0){ let done=false; held.forEach(h=>{if(h.n===a+transpose+octave*12){tx([0xA0|h.ch,a,b]);done=true;}}); if(!done)tx([0xA0|dch,a,b]); }
+}
+function bindIn(id){
+  if(!access)return;
+  portArr("inputs").forEach(p=>p.onmidimessage=null);
+  inPort=portGet("inputs",id);
+  if(inPort){try{if(inPort.open)inPort.open();}catch(e){}inPort.onmidimessage=onMidi;}
+}
+function bindOut(id){
+  if(typeof restored!=="undefined"&&!restored)restoreDevice(true);
+  panic();
+  outPort=access?portGet("outputs",id):null;
+  if(outPort){try{if(outPort.open)outPort.open();}catch(e){}healOnReconnect();}
+  resetPool();checkOut();
+  if(outPort&&typeof setBendRangeOnDevice==="function")setBendRangeOnDevice();
+}
+function checkOut(){
+  const w=el("warn");
+  if(!outPort){w.className="warn err show";
+    w.innerHTML=T("noOut");}
+  else w.className="warn err";
+}
+function refresh(){
+  const iS=el("inSel"),oS=el("outSel"),ki=iS.value,ko=oS.value;
+  iS.innerHTML='<option value="">—</option>';oS.innerHTML='<option value="">—</option>';
+  let ni=0,no=0;
+  portArr("inputs").forEach(p=>{ni++;const o=document.createElement("option");o.value=p.id;o.textContent=p.name||("input "+ni);iS.appendChild(o);});
+  portArr("outputs").forEach(p=>{no++;const o=document.createElement("option");o.value=p.id;o.textContent=p.name||("output "+no);oS.appendChild(o);});
+  iS.value=ki||(ni?iS.options[1].value:"");
+  oS.value=ko||(no?oS.options[1].value:"");
+  bindIn(iS.value);bindOut(oS.value);
+  L("i","ports refreshed — in:"+ni+" out:"+no);
+  stat(ni>0&&no>0, "IN: "+(ni?ni:"0")+"  ·  OUT: "+(no?no:"0")+(sysexOK?"  · SysEx ✓":"  · SysEx ✗"));
+}
+async function connect(){
+  if(!window.isSecureContext||!navigator.requestMIDIAccess){
+    const w=el("warn");w.className="warn err show";
+    w.innerHTML="⚠️ MIDI مغلق: الصفحة ليست <b>https://</b>. Web MIDI لا يعمل من ملف محلي — ارفع التطبيق على استضافة آمنة.";
+    stat(false,"Not secure — MIDI unavailable.");return;}
+  try{ access=await navigator.requestMIDIAccess({sysex:true}); sysexOK=true; }
+  catch(e){ try{ access=await navigator.requestMIDIAccess({sysex:false}); sysexOK=false; }
+            catch(e2){ L("e","requestMIDIAccess denied: "+e2.message); stat(false,"تم رفض إذن MIDI."); return; } }
+  L("i","MIDI access granted, sysex="+sysexOK);
+  setTimeout(()=>{try{healOnReconnect();}catch(e){}},300);
+  try{access.onstatechange=(ev)=>{
+    if(ev&&ev.port&&ev.port.type==="output"&&ev.port.state==="disconnected"){
+      held.clear();ksOn=false;restored=true;
+      el("bKS").textContent=T("ksOn");
+      L("w","output disconnected: "+ev.port.name);
+      if(isUnsafe())showStuck(true);
+      ksMsg(T("disc"));
+    }
+    refresh();
+  };}catch(e){L("w","onstatechange unsupported (old shim)");}
+  refresh();
+}
+/* MTS bulk tuning dump */
+function sendMTS(){
+  const i=el("info");
+  if(!outPort){i.className="warn info show";i.textContent="اختر MIDI OUT أولاً.";return;}
+  if(!sysexOK){i.className="warn info show";i.textContent="SysEx غير مسموح — امنح إذن MIDI الكامل على رابط https.";return;}
+  const d=[0xF0,0x7F,0x7F,0x08,0x02,0x00,127];
+  for(let m=0;m<128;m++){
+    const t=m+centsOf(m)/100;
+    let base=Math.floor(t),f=t-base;
+    if(base<0){base=0;f=0;} if(base>127){base=127;f=0;}
+    const v=Math.max(0,Math.min(16383,Math.round(f*16384)));
+    d.push(m,base,(v>>7)&0x7f,v&0x7f);
+  }
+  d.push(0xF7);
+  i.className="warn info show";
+  L("i","MTS dump sent, "+d.length+" bytes");
+  i.innerHTML = tx(d)
+   ? "✅ أُرسل جدول تشريق كامل (128 نغمة) إلى الجهاز.<br>إن لم يتغيّر شيء فجهازك لا يدعم MTS — ارجع لوضع <b>Pitch-Bend</b>."
+   : "❌ فشل الإرسال.";
+}
+
+/* ============ SCALE VIEW ============ */
+function renderMaqam(){
+  const M=MAQAMAT[maqIdx];
+  el("maqTtl").textContent=M.ar+" · "+M.en;
+  const sc=el("scale");sc.innerHTML="";
+  let anyQ=false;
+  M.d.concat([[12,M.d[0][1]]]).forEach(([s,c])=>{
+    const pc=rootPc+s, lab=nm(pc);
+    if(c)anyQ=true;
+    const e=document.createElement("div");e.className="dg"+(c?" qt":"");
+    e.innerHTML='<div class="n">'+lab+(c===-50?"½♭":c===50?"½#":"")+'</div><div class="c">'+(c?c+"¢":"—")+'</div>';
+    sc.appendChild(e);
+  });
+  const keys=M.d.map(([s])=>nm(rootPc+s)).join(" – ");
+  const eq = M.eq ? T("sameAs").replace("%s",M.eq) : "";
+  el("maqNote").innerHTML = (anyQ ? T("playKeys") : T("noQT")).replace("%s",keys)+eq;
+  el("maqTtl").textContent = lang==="ar" ? (M.ar+" · "+M.en) : (M.en+" · "+M.ar);
+}
+
+/* ============ TUNER ============ */
+const WK=[0,2,4,5,7,9,11], BK={1:0,3:1,6:3,8:4,10:5};
+let sel=null, tName="Default.Template";
+function drawKb(){
+  const kb=el("qkb");kb.innerHTML="";
+  const w=100/7;
+  WK.forEach(pc=>{
+    const k=document.createElement("div");k.className="qw"+(sel===pc?" sel":"");
+    const c=cents[pc];
+    k.innerHTML=(c?'<div class="cv">'+(c>0?"+":"")+c+'</div><div class="mk"></div>':'')+'<div class="lb">'+nm(pc)+'</div>';
+    k.onpointerdown=()=>{sel=pc;drawKb();head();};
+    kb.appendChild(k);
+  });
+  Object.keys(BK).forEach(k=>{
+    const pc=+k,i=BK[k],b=document.createElement("div");
+    b.className="qk"+(sel===pc?" sel":"");b.style.left=(w*(i+1))+"%";
+    const c=cents[pc];
+    if(c)b.innerHTML='<div class="cv">'+(c>0?"+":"")+c+'</div><div class="mk"></div>';
+    b.onpointerdown=e=>{e.stopPropagation();sel=pc;drawKb();head();};
+    kb.appendChild(b);
+  });
+}
+function head(){
+  el("qhL").textContent=T("allOct");
+  el("qhR").textContent = sel===null ? T("noKey") : nm(sel)+"  "+(cents[sel]>0?"+":"")+cents[sel]+"¢";
+  document.querySelectorAll(".qr:not(.fine) button").forEach(b=>
+    b.classList.toggle("on", sel!==null && +b.dataset.c===cents[sel]));
+  el("tName").textContent=tName+(cents.some(x=>x)?" *":"");
+}
+function setCents(v,rel){
+  if(sel===null){el("qhR").textContent=T("pickKey");return;}
+  undoS.push([...cents]); if(undoS.length>60)undoS.shift();
+  let n = rel ? cents[sel]+v : v;
+  cents[sel]=Math.max(-100,Math.min(100,n));
+  manualEdit=true;
+  panic();drawKb();head();
+}
+document.querySelectorAll(".qr:not(.fine) button").forEach(b=>b.onclick=()=>setCents(+b.dataset.c,false));
+document.querySelectorAll(".qr.fine button").forEach(b=>b.onclick=()=>setCents(+b.dataset.d,true));
+el("bUndo").onclick=()=>{if(!undoS.length)return;cents=undoS.pop();panic();drawKb();head();};
+el("bReset").onclick=()=>{undoS.push([...cents]);cents=new Array(12).fill(0);panic();drawKb();head();};
+
+/* templates */
+let mem={};
+function ST(){try{return JSON.parse(localStorage.getItem("qt_tpl")||"{}");}catch(e){return mem;}}
+function SS(o){try{localStorage.setItem("qt_tpl",JSON.stringify(o));}catch(e){mem=o;}}
+function fillTpl(){const s=el("tSel"),o=ST();s.innerHTML='<option value="">— templates —</option>';
+  Object.keys(o).forEach(k=>{const e=document.createElement("option");e.value=k;e.textContent=k;s.appendChild(e);});}
+el("bSave").onclick=()=>{
+  const n=prompt(T("tplName"),tName.replace(/\.Template$/,""));if(!n)return;
+  const k=n+".Template",o=ST();o[k]={c:[...cents],m:maqIdx,r:rootPc};SS(o);
+  tName=k;fillTpl();el("tSel").value=k;head();};
+el("tSel").onchange=e=>{const d=ST()[e.target.value];if(!d)return;
+  undoS.push([...cents]);cents=[...d.c];maqIdx=d.m??maqIdx;rootPc=d.r??rootPc;manualEdit=true;
+  el("maqSel").value=maqIdx;el("rootSel").value=rootPc;
+  tName=e.target.value;panic();renderMaqam();drawKb();head();};
+
+
+
+/* ============ SAFETY ENGINE ============ */
+/* الجهاز لا يُترك أبداً في حالة غير طبيعية. */
+let ksOn=false, autoRestore=true, idleTimer=null, restored=true;
+const DEFAULT_BR=2;
+
+function forAllCh(fn){ for(let c=0;c<16;c++) fn(c); }
+
+function enterKS(){                       // keyboard + speaker mode
+  if(!outPort){ksMsg(T("needOut"));return;}
+  forAllCh(c=>{
+    tx([0xB0|c,123,0]);                   // all notes off
+    tx([0xE0|c,0,64]);                    // bend center
+    tx([0xB0|c,101,0]);tx([0xB0|c,100,0]);
+    tx([0xB0|c,6,bendRange]);tx([0xB0|c,38,0]);
+    tx([0xB0|c,101,127]);tx([0xB0|c,100,127]);
+    tx([0xB0|c,122,0]);                   // LOCAL OFF
+  });
+  if(typeof sendProg==="function")sendProg();
+  markUnsafe(true);
+  ksOn=true;restored=false;L("i","KS mode ON (local off sent, bendRange ±"+bendRange+")");
+  el("bKS").textContent=T("ksOff");
+  ksMsg(T("ksDone"));
+  armIdle();
+}
+function restoreDevice(quiet){
+  if(outPort){
+    forAllCh(c=>{
+      tx([0xB0|c,64,0]);                  // sustain off
+      tx([0xB0|c,123,0]);                 // all notes off
+      tx([0xB0|c,120,0]);                 // all sound off
+      tx([0xE0|c,0,64]);                  // bend center
+      tx([0xB0|c,101,0]);tx([0xB0|c,100,0]);
+      tx([0xB0|c,6,DEFAULT_BR]);tx([0xB0|c,38,0]);   // bend range back to factory 2
+      tx([0xB0|c,101,127]);tx([0xB0|c,100,127]);     // RPN null
+      tx([0xB0|c,121,0]);                 // reset all controllers
+      tx([0xB0|c,7,100]);                 // volume default
+      tx([0xB0|c,10,64]);                 // pan center
+      tx([0xB0|c,122,127]);               // LOCAL ON  ← الأهم
+    });
+  }
+  markUnsafe(false);showStuck(false);
+  held.clear();ksOn=false;restored=true;upd();L("i","device restored (local on, bend ±2, controllers reset)");
+  el("bKS").textContent=T("ksOn");
+  ["c7","c91","c93","c10"].forEach((id,i)=>{const v=[100,40,0,64][i];const e=el(id);if(e){e.value=v;el(id+"v").textContent=v;}});
+  if(!quiet)ksMsg(T("restored"));
+  clearTimeout(idleTimer);
+}
+function resetDeviceTuning(){             // flat / equal-temperament MTS
+  if(!outPort||!sysexOK){ksMsg(T("needSysex"));return;}
+  const d=[0xF0,0x7F,0x7F,0x08,0x02,0x00,127];
+  for(let m=0;m<128;m++)d.push(m,m,0,0);
+  d.push(0xF7);tx(d);
+  ksMsg(T("tuneReset"));
+}
+function ksMsg(h){el("ksinfo").innerHTML=h;}
+function armIdle(){
+  clearTimeout(idleTimer);
+  if(!autoRestore||!ksOn)return;
+  idleTimer=setTimeout(()=>{ if(ksOn){restoreDevice(true);
+    ksMsg(T("idleR"));}},300000);
+}
+
+/* -- كل مسارات الخروج تُرجع الجهاز -- */
+function safeExit(){ if(!restored) restoreDevice(true); }
+window.addEventListener("pagehide",safeExit);
+window.addEventListener("beforeunload",safeExit);
+window.addEventListener("unload",safeExit);
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden){ forAllCh(c=>{tx([0xB0|c,123,0]);tx([0xB0|c,64,0]);});
+    if(autoRestore) safeExit(); }
+});
+window.addEventListener("error",()=>{safeExit();});
+
+el("bKS").onclick=()=>{ ksOn?restoreDevice(false):enterKS(); };
+el("bRestore").onclick=()=>restoreDevice(false);
+el("bSafeUnplug").onclick=safeUnplug;
+el("bAuto").onclick=e=>{autoRestore=!autoRestore;e.target.textContent=T("autoR")+(autoRestore?"ON":"OFF");armIdle();};
+el("bResetTune").onclick=resetDeviceTuning;
+
+/* ============ DEVICE SETUP / DIAGNOSTICS ============ */
+let chSpan=16, autoLocal=true;
+const DEVS={
+ casio:{span:16,br:2,mts:false,local:true,
+   t:"<b>Casio WK-7600</b> — GM tone generator, 16-part multi-timbral, USB-to-Host + 5-pin MIDI IN/OUT.<br>"+
+     "• Set to <b>1–16</b> so every note gets its own bend channel — full per-note tashreeq.<br>"+
+     "• Press <b>Test channels</b> first: if you only hear channel 1, switch to <b>single channel</b>.<br>"+
+     "• The keyboard's own sound plays untuned alongside the app's note — that is the doubling. Turn on <b>Keyboard + Speaker Mode</b> (sends Local OFF). If Casio ignores CC122, set <b>Local Control = Off</b> in the FUNCTION menu instead, and turn it back On when finished.<br>"+
+     "• Bend range: this app sets it by RPN. If it has no effect, set <b>Bend Range = 2</b> in the FUNCTION menu.<br>"+
+     "• No MTS support — stay in <b>Pitch-Bend</b> mode."},
+ p125:{span:1,br:2,mts:false,local:true,
+   t:"<b>Yamaha P-125</b> — منفذ USB-to-Host يعمل مع أندرويد عبر OTG.<br>"+
+     "• <b>سبب الصوتين:</b> البيانو يعزف نغمته الداخلية غير المشرّقة في نفس لحظة وصول نغمة التطبيق. اضغط <b>Local OFF</b> ليتوقف الصوت الداخلي ويبقى الصوت المُشرَّق فقط.<br>"+
+     "• محرك P-125 يستقبل عادة على <b>قناة واحدة</b>، لذلك اخترت لك <b>single channel</b>. هذا يعني أن التشريق يُطبَّق على كل النوتات المعزوفة معاً بنفس المقدار — الأكورد الذي يخلط نغمة مشرّقة وأخرى عادية لن يكون دقيقاً.<br>"+
+     "• لا يدعم MTS — ابقَ على وضع <b>Pitch-Bend</b>."},
+ psr:{span:16,br:2,mts:false,local:true,
+   t:"<b>Yamaha PSR / Genos</b> — محرك GM متعدد القنوات (16). استخدم <b>1–16</b> لتشريق دقيق لكل نوتة على حدة. اضغط Local OFF لمنع ازدواج الصوت."},
+ korg:{span:16,br:2,mts:false,local:true,
+   t:"<b>Korg PA</b> — متعدد القنوات. ملاحظة: كورغ الشرقي فيه نظام تشريق داخلي خاص لا يتبع معيار MTS، لذا استخدم <b>Pitch-Bend</b> من هنا، أو استعمل تشريق الجهاز نفسه."},
+ roland:{span:16,br:2,mts:false,local:true,
+   t:"<b>Roland</b> — متعدد القنوات في وضع GM/GS. استخدم 1–16 مع Pitch-Bend."},
+ gm:{span:16,br:2,mts:true,local:true,
+   t:"<b>Generic GM</b> — جرّب 1–16 مع Pitch-Bend. إن كان الجهاز يدعم MTS فوضع MTS أدق."}
+};
+function applyDev(){
+  const k=el("dev").value,D=DEVS[k];
+  el("span").value=String(D.span); chSpan=D.span;
+  el("brange").value=String(D.br); bendRange=D.br;
+  el("mode").value = D.mts ? el("mode").value : "bend";
+  if(!D.mts) mode="bend";
+  panic(); resetPool(); if(typeof sendProg==="function")sendProg();
+  el("dinfo").innerHTML=D.t;
+}
+function spanList(){
+  const n=chSpan;
+  if(n===1)return [dch];
+  return [...Array(16).keys()].filter(c=>c!==9).slice(0,n);
+}
+function setBendRangeOnDevice(){
+  bendRange=Math.max(bendRange,needRange());
+  const bs=el("brange"); if(bs&&[...bs.options].some(o=>+o.value===bendRange))bs.value=String(bendRange);
+  brWarned=false;
+  spanList().forEach(ch=>{
+    tx([0xB0|ch,101,0]);tx([0xB0|ch,100,0]);
+    tx([0xB0|ch,6,bendRange]);tx([0xB0|ch,38,0]);
+    tx([0xB0|ch,101,127]);tx([0xB0|ch,100,127]);
+  });
+  el("dinfo").innerHTML="أُرسل أمر ضبط نطاق البِند = ±"+bendRange+" نصف درجة على "+spanList().length+" قناة.";
+}
+function testChannels(){
+  if(!outPort){el("dinfo").textContent="اختر MIDI OUT أولاً.";return;}
+  const chs=spanList(); let i=0;
+  el("dinfo").innerHTML="اختبار القنوات… استمع وحدّد أي قناة تصدر صوتاً.";
+  (function step(){
+    if(i>=chs.length){el("dinfo").innerHTML="انتهى الاختبار. إن سمعت صوتاً على القناة 1 فقط، اختر <b>single channel</b>.";return;}
+    const ch=chs[i++];
+    el("dinfo").innerHTML="اختبار القناة <b>"+(ch+1)+"</b> …";
+    tx([0x90|ch,60,100]);
+    setTimeout(()=>{tx([0x80|ch,60,0]);setTimeout(step,140);},380);
+  })();
+}
+function testQT(){
+  if(!outPort){el("dinfo").textContent="اختر MIDI OUT أولاً.";return;}
+  const ch=spanList()[0], n=64;
+  el("dinfo").innerHTML="نغمة عادية ← ثم نفسها مشرّقة −50¢. إن سمعت الفرق فالتشريق يعمل.";
+  tx([0xE0|ch,0,64]); tx([0x90|ch,n,100]);
+  setTimeout(()=>{tx([0x80|ch,n,0]);
+    setTimeout(()=>{const b=bendVal(-50);tx([0xE0|ch,b&0x7f,(b>>7)&0x7f]);tx([0x90|ch,n,100]);
+      setTimeout(()=>{tx([0x80|ch,n,0]);tx([0xE0|ch,0,64]);},700);},220);},700);
+}
+el("dev").onchange=applyDev;
+el("span").onchange=e=>{panic();chSpan=+e.target.value;resetPool();sendProg();};
+el("bAutoLocal").onclick=e=>{autoLocal=!autoLocal;e.target.textContent="Auto Local-OFF: "+(autoLocal?"ON":"OFF");
+  if(autoLocal&&outPort)for(let c=0;c<16;c++)tx([0xB0|c,122,0]);};
+el("bSetBR").onclick=setBendRangeOnDevice;
+el("wheel").onchange=e=>{panic();wheelOn=e.target.value==="1";setBendRangeOnDevice();
+  el("dinfo").innerHTML=wheelOn?T("wheelOn"):T("wheelOff");};
+el("wrange").onchange=e=>{panic();wheelRange=+e.target.value;setBendRangeOnDevice();
+  el("dinfo").innerHTML=T("wheelOn").replace("%s",wheelRange);};
+el("bTestCh").onclick=testChannels;
+el("bTestQT").onclick=testQT;
+el("bReapply").onclick=()=>{sendProg();el("dinfo").innerHTML=T("reapplied");};
+
+/* ============ ORG CONTROL ============ */
+const GM=["Ac.Grand","Br.Acoustic","El.Grand","Honky-tonk","E.Piano 1","E.Piano 2","Harpsichord","Clavi","Celesta","Glockenspiel","Music Box","Vibraphone","Marimba","Xylophone","Tub.Bells","Dulcimer","Drawbar Org","Perc.Organ","Rock Organ","Church Org","Reed Organ","Accordion","Harmonica","Tango Acc","Guitar nylon","Guitar steel","Guitar jazz","Guitar clean","Guitar muted","Overdrive Gt","Distortion Gt","Gt.Harmonics","Ac.Bass","Finger Bass","Pick Bass","Fretless","Slap Bass 1","Slap Bass 2","Syn Bass 1","Syn Bass 2","Violin","Viola","Cello","Contrabass","Trem.Strings","Pizz.Strings","Harp","Timpani","Strings 1","Strings 2","Syn.Strings1","Syn.Strings2","Choir Aahs","Voice Oohs","Synth Voice","Orchestra Hit","Trumpet","Trombone","Tuba","Muted Trumpet","French Horn","Brass Section","Syn Brass 1","Syn Brass 2","Soprano Sax","Alto Sax","Tenor Sax","Bari Sax","Oboe","English Horn","Bassoon","Clarinet","Piccolo","Flute","Recorder","Pan Flute","Blown Bottle","Shakuhachi","Whistle","Ocarina","Lead Square","Lead Saw","Lead Calliope","Lead Chiff","Lead Charang","Lead Voice","Lead Fifths","Lead Bass+Ld","Pad New Age","Pad Warm","Pad Polysynth","Pad Choir","Pad Bowed","Pad Metallic","Pad Halo","Pad Sweep","FX Rain","FX Soundtrack","FX Crystal","FX Atmosphere","FX Brightness","FX Goblins","FX Echoes","FX Sci-Fi","Sitar","Banjo","Shamisen","Koto","Kalimba","Bagpipe","Fiddle","Shanai","Tinkle Bell","Agogo","Steel Drums","Woodblock","Taiko","Melodic Tom","Synth Drum","Rev.Cymbal","Gt.Fret Noise","Breath Noise","Seashore","Bird Tweet","Telephone","Helicopter","Applause","Gunshot"];
+function fillDev(){
+  const c=el("dch");for(let i=0;i<16;i++){const o=document.createElement("option");o.value=i;o.textContent="Ch "+(i+1);c.appendChild(o);}
+  const p=el("dpg");GM.forEach((n,i)=>{const o=document.createElement("option");o.value=i;o.textContent=(i+1)+". "+n;p.appendChild(o);});
+  ["dbm","dbl"].forEach(id=>{const e=el(id);for(let i=0;i<128;i++){const o=document.createElement("option");o.value=i;o.textContent=i;e.appendChild(o);}});
+}
+function sendProg(){
+  const msb=+el("dbm").value,lsb=+el("dbl").value,pg=+el("dpg").value;
+  const chs=(mode==="bend")?spanList():[dch];
+  chs.forEach(ch=>{tx([0xB0|ch,0,msb]);tx([0xB0|ch,32,lsb]);tx([0xC0|ch,pg]);});
+  L("i","program "+pg+" bank "+msb+"/"+lsb+" → "+chs.length+" channel(s)");
+}
+function fillRoots(){const r=el("rootSel"),k=r.value;r.innerHTML="";
+  for(let i=0;i<12;i++){const o=document.createElement("option");o.value=i;o.textContent=nm(i);r.appendChild(o);}
+  r.value=(k!==""&&k!=null)?k:rootPc;}
+function fillMaq(){
+  const sel=el("maqSel"),k=sel.value;sel.innerHTML="";
+  FAMORDER.forEach(f=>{
+    const list=MAQAMAT.map((m,i)=>[m,i]).filter(([m])=>m.fam===f);
+    if(!list.length)return;
+    const g=document.createElement("optgroup");g.label=FAM[f]?FAM[f][lang]||FAM[f].en:f;
+    list.forEach(([m,i])=>{const o=document.createElement("option");o.value=i;
+      const q=m.d.some(x=>x[1]!==0)?"¼ ":"";
+      o.textContent=q+(lang==="ar"?(m.ar+" · "+m.en):(m.en+" · "+m.ar));g.appendChild(o);});
+    sel.appendChild(g);
+  });
+  sel.value=(k!==""&&k!=null)?k:maqIdx;
+}
+
+/* ============ EVENTS ============ */
+el("connect").onclick=connect;
+el("inSel").onchange=e=>{panic();bindIn(e.target.value);};
+el("outSel").onchange=e=>bindOut(e.target.value);
+el("mode").onchange=e=>{panic();mode=e.target.value;resetPool();sendProg();
+  el("info").className="warn info show";
+  el("info").innerHTML = mode==="mts"
+   ? "وضع <b>MTS</b>: النوتات تُرسل على قناة واحدة، والتشريق يُطبَّق داخل الجهاز — اضغط زر الإرسال بالأسفل بعد كل تغيير."
+   : "وضع <b>Pitch-Bend</b>: كل نوتة على قناة منفصلة مع انحناء دقيق. يعمل مع أغلب الأجهزة بدون إعدادات.";};
+el("brange").onchange=e=>{panic();bendRange=+e.target.value;brWarned=false;resetPool();};
+el("naming").onchange=e=>{naming=e.target.value;fillRoots();renderMaqam();drawKb();head();};
+el("maqSel").onchange=e=>{panic();const prev=maqIdx;maqIdx=+e.target.value;const pr=rootPc;rootPc=MAQAMAT[maqIdx].root;
+  if(!applyMaqam()){maqIdx=prev;rootPc=pr;e.target.value=prev;}
+  el("rootSel").value=rootPc;renderMaqam();drawKb();head();};
+el("rootSel").onchange=e=>{panic();const pr=rootPc;rootPc=+e.target.value;
+  if(!applyMaqam()){rootPc=pr;e.target.value=pr;}
+  renderMaqam();drawKb();head();};
+el("dch").onchange=e=>{panic();dch=+e.target.value;resetPool();sendProg();};
+el("dpg").onchange=()=>{sendProg();drawInstr();};el("dbm").onchange=sendProg;el("dbl").onchange=sendProg;
+[[7,"c7"],[91,"c91"],[93,"c93"],[10,"c10"]].forEach(([n,id])=>{
+  el(id).oninput=ev=>{el(id+"v").textContent=ev.target.value;tx([0xB0|dch,n,+ev.target.value]);};});
+el("tr").oninput=e=>setTranspose(+e.target.value,false);
+el("oc").oninput=e=>{panic();octave=+e.target.value;el("ocv").textContent=(octave>0?"+":"")+octave;setTranspose(transpose,false);};
+el("bLocalOff").onclick=()=>{for(let c=0;c<16;c++)tx([0xB0|c,122,0]);};
+el("bLocalOn").onclick=()=>{for(let c=0;c<16;c++)tx([0xB0|c,122,127]);};
+el("bPanic").onclick=panic;
+el("bMTS").onclick=sendMTS;
+
+
+/* ---- report ---- */
+function buildReport(){
+  const ports=(t)=>{try{const a=portArr(t).map(p=>(p.name||"?")+" ["+(p.state||"?")+"]");return a.length?a.join(", "):"none";}catch(e){return "n/a";}};
+  const M=(typeof MAQAMAT!=="undefined"&&MAQAMAT[maqIdx])?MAQAMAT[maqIdx]:{en:"?",ar:"?"};
+  return [
+  "=== MAQAM TASHREEQ ENGINE — REPORT ===",
+  "time      : "+new Date().toISOString(),
+  "url       : "+location.href,
+  "secure    : "+window.isSecureContext,
+  "webmidi   : "+(!!navigator.requestMIDIAccess),
+  "sysex     : "+sysexOK,
+  "ua        : "+navigator.userAgent,
+  "--- ports ---",
+  "inputs    : "+ports("inputs"),
+  "outputs   : "+ports("outputs"),
+  "in bound  : "+(inPort?inPort.name:"none"),
+  "out bound : "+(outPort?outPort.name:"none"),
+  "--- state ---",
+  "mode      : "+mode+"   bendRange: ±"+bendRange+"   chSpan: "+chSpan,
+  "device    : "+(document.getElementById("dev")||{value:"?"}).value,
+  "channel   : "+(dch+1)+"   transpose: "+transpose+"   octave: "+octave,
+  "ks mode   : "+ksOn+"   autoRestore: "+autoRestore+"   restored: "+restored,
+  "maqam     : "+M.en+" / "+M.ar+"   root: "+nm(rootPc)+" ("+rootPc+")",
+  "cents[12] : ["+cents.join(",")+"]",
+  "pool      : ["+pool.join(",")+"]   held: "+held.size+"   notes: "+count,
+  "errors    : "+errCount,
+  "--- log ("+Math.min(LOG.length,120)+") ---",
+  LOG.slice(-120).map(x=>x.t+" "+x.lvl.toUpperCase()+" "+x.msg).join("\n"),
+  "=== END ==="].join("\n");
+}
+document.getElementById("bCopy").onclick=async()=>{
+  const r=buildReport();
+  try{await navigator.clipboard.writeText(r);L("i","report copied ("+r.length+" chars)");}
+  catch(e){
+    const ta=document.createElement("textarea");ta.value=r;ta.style.cssText="position:fixed;top:0;left:0;width:99%;height:60vh;z-index:9999";
+    document.body.appendChild(ta);ta.select();
+    try{document.execCommand("copy");L("i","report copied (fallback)");}catch(e2){L("w","انسخ يدوياً من الصندوق");}
+    setTimeout(()=>ta.remove(),8000);
+  }
+};
+document.getElementById("bClear").onclick=()=>{LOG.length=0;errCount=0;
+  const b=document.getElementById("errBadge");b.style.display="none";drawLog();L("i","log cleared");};
+document.getElementById("bMidiLog").onclick=e=>{midiLog=!midiLog;e.target.textContent=T("midiLog")+(midiLog?"ON":"OFF");};
+document.getElementById("bSelfTest").onclick=()=>{
+  L("i","--- self test ---");
+  L(window.isSecureContext?"i":"e","secure context: "+window.isSecureContext);
+  L(navigator.requestMIDIAccess?"i":"e","Web MIDI API: "+!!navigator.requestMIDIAccess);
+  L(access?"i":"w","MIDI access: "+!!access);
+  L(inPort?"i":"w","MIDI in: "+(inPort?inPort.name:"NOT SELECTED"));
+  L(outPort?"i":"e","MIDI out: "+(outPort?outPort.name:"NOT SELECTED — no sound will be produced"));
+  L(sysexOK?"i":"w","SysEx: "+sysexOK+(sysexOK?"":" (MTS unavailable)"));
+  const q=cents.filter(x=>x).length;
+  L(q?"i":"w","tashreeq: "+q+" keys offset"+(q?"":" (this maqam needs none)"));
+  L("i","channels available: "+pool.length+" | span "+chSpan);
+  if(outPort){try{tx([0xB0|dch,123,0]);L("i","test send OK");}catch(e){L("e","test send failed: "+e.message);}}
+  L("i","--- end self test ---");
+};
+
+
+
+
+
+/* ============ UNPLUG SAFETY ============ */
+/* Once the port is gone we can no longer send Local-ON, so:
+   1) mark an "unsafe" flag the moment the device engine is muted,
+   2) clear it only after a confirmed restore,
+   3) on any later launch/reconnect, restore first thing. */
+const FLAG="qt_local_off";
+function markUnsafe(on){
+  try{ on?localStorage.setItem(FLAG,String(Date.now())):localStorage.removeItem(FLAG); }catch(e){}
+  window.__qtUnsafe=on;
+}
+function isUnsafe(){ try{ return !!localStorage.getItem(FLAG); }catch(e){ return !!window.__qtUnsafe; } }
+function showStuck(show){
+  const b=el("stuck"); if(!b)return;
+  b.style.display=show?"block":"none";
+  if(show)b.innerHTML=T("stuckMsg");
+}
+function healOnReconnect(){
+  if(!outPort||!isUnsafe())return;
+  for(let c=0;c<16;c++)tx([0xB0|c,122,127]);   // LOCAL ON, immediately
+  markUnsafe(false); showStuck(false);
+  L("i","auto-heal: Local ON re-sent after reconnect");
+  ksMsg(T("healed"));
+}
+function safeUnplug(){
+  if(!outPort){ ksMsg(T("noPortUnplug")); markUnsafe(false); showStuck(false); return; }
+  restoreDevice(true);
+  markUnsafe(false); showStuck(false);
+  ksMsg(T("safeNow"));
+  L("i","safe-unplug: device restored, cable can be removed");
+}
+/* watchdog: some platforms (iOS shim) never fire onstatechange */
+let lastOutIds="";
+setInterval(()=>{
+  if(!access)return;
+  const ids=portArr("outputs").map(p=>p.id).join("|");
+  if(ids===lastOutIds)return;
+  const had=lastOutIds; lastOutIds=ids;
+  if(!had)return;
+  const stillThere=outPort&&ids.split("|").indexOf(String(outPort.id))>=0;
+  if(outPort&&!stillThere){
+    L("w","output vanished (polled) — cannot send Local ON any more");
+    held.clear(); ksOn=false; upd();
+    el("bKS").textContent=T("ksOn");
+    if(isUnsafe())showStuck(true);
+    refresh();
+  } else if(ids.length>had.length){
+    L("i","new output detected"); refresh(); healOnReconnect();
+  }
+},2000);
+
+/* ============ PLATFORM SUPPORT ============ */
+function platform(){
+  const ua=navigator.userAgent, iOS=/iPad|iPhone|iPod/.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1);
+  const android=/Android/.test(ua);
+  const hasMIDI=!!navigator.requestMIDIAccess;
+  const shim=hasMIDI&&iOS;
+  return {iOS,android,hasMIDI,shim,secure:window.isSecureContext};
+}
+function showPlatform(){
+  const p=platform(),m=el("platMsg");
+  let k;
+  if(p.hasMIDI&&p.secure) k = p.shim?"pOKios":(p.android?"pOKand":"pOKdesk");
+  else if(p.iOS) k="pIOS";
+  else if(!p.secure) k="pNotSecure";
+  else k="pNoMIDI";
+  m.className="warn "+(k.startsWith("pOK")?"info":"err")+" show";
+  m.innerHTML=T(k);
+  L("i","platform: "+(p.iOS?"iOS":p.android?"Android":"desktop")+" midi="+p.hasMIDI+" shim="+p.shim+" secure="+p.secure);
+}
+
+/* ============ QUICK INSTRUMENTS ============ */
+const INSTR=[
+ {p:21,en:"Accordion",ar:"أكورديون"},
+ {p:23,en:"Tango Accordion",ar:"أكورديون تانغو"},
+ {p:48,en:"Strings",ar:"وتريات"},
+ {p:49,en:"Slow Strings",ar:"وتريات بطيئة"},
+ {p:44,en:"Tremolo Strings",ar:"وتريات مرتجفة"},
+ {p:40,en:"Violin",ar:"كمان"},
+ {p:41,en:"Viola",ar:"فيولا"},
+ {p:42,en:"Cello",ar:"تشيلو"},
+ {p:45,en:"Pizzicato",ar:"بيتزيكاتو"},
+ {p:46,en:"Harp / Qanun",ar:"هارب / قانون"},
+ {p:15,en:"Dulcimer / Santur",ar:"سنطور"},
+ {p:24,en:"Nylon Gt / Oud",ar:"عود"},
+ {p:104,en:"Sitar / Buzuq",ar:"بزق"},
+ {p:105,en:"Banjo",ar:"بانجو"},
+ {p:107,en:"Koto",ar:"كوتو"},
+ {p:75,en:"Pan Flute / Ney",ar:"ناي"},
+ {p:73,en:"Flute",ar:"فلوت"},
+ {p:71,en:"Clarinet",ar:"كلارينيت"},
+ {p:68,en:"Oboe",ar:"مزمار"},
+ {p:111,en:"Shanai / Mizmar",ar:"زرنا"},
+ {p:65,en:"Alto Sax",ar:"ساكس ألتو"},
+ {p:66,en:"Tenor Sax",ar:"ساكس تينور"},
+ {p:56,en:"Trumpet",ar:"ترومبيت"},
+ {p:61,en:"Brass",ar:"براس"},
+ {p:16,en:"Drawbar Organ",ar:"أورغ"},
+ {p:19,en:"Church Organ",ar:"أورغ كنسي"},
+ {p:22,en:"Harmonica",ar:"هارمونيكا"},
+ {p:52,en:"Choir Aahs",ar:"كورال"},
+ {p:54,en:"Synth Voice",ar:"صوت سنث"},
+ {p:0,en:"Grand Piano",ar:"بيانو"},
+ {p:4,en:"E.Piano",ar:"بيانو كهربائي"},
+ {p:11,en:"Vibraphone",ar:"فيبرافون"}
+];
+function drawInstr(){
+  const g=el("igrid");g.innerHTML="";
+  const cur=+el("dpg").value;
+  INSTR.forEach(it=>{
+    const b=document.createElement("button");
+    b.className=(it.p===cur?"on":"");
+    b.innerHTML=(lang==="ar"?it.ar:it.en)+"<small>"+(lang==="ar"?it.en:it.ar)+" · "+(it.p+1)+"</small>";
+    b.onclick=()=>{el("dpg").value=it.p;sendProg();drawInstr();L("i","voice → "+it.en+" (PC "+it.p+")");};
+    g.appendChild(b);
+  });
+}
+
+/* ============ TRANSPOSE (semitones, applied to outgoing notes) ============ */
+function setTranspose(v,rel){
+  panic();
+  transpose=Math.max(-24,Math.min(24,rel?transpose+v:v));
+  const sl=el("tr"); if(sl){ sl.value=Math.max(-12,Math.min(12,transpose)); el("trv").textContent=(transpose>0?"+":"")+transpose; }
+  el("trBig").textContent=(transpose>0?"+":"")+transpose;
+  const total=transpose+octave*12;
+  el("trNote").innerHTML=T("trNote").replace("%s",(total>0?"+":"")+total)
+    .replace("%k",nm(rootPc)).replace("%r",nm(rootPc+total));
+  L("i","transpose="+transpose+" octave="+octave+" total="+total);
+}
+el("trM12").onclick=()=>setTranspose(-12,true);
+el("trM1").onclick=()=>setTranspose(-1,true);
+el("trP1").onclick=()=>setTranspose(1,true);
+el("trP12").onclick=()=>setTranspose(12,true);
+el("trZ").onclick=()=>setTranspose(0,false);
+
+/* ============ MASTER RESET ============ */
+function masterReset(){
+  if(!confirm(T("askReset")))return;
+  restoreDevice(true);
+  maqIdx=0; rootPc=MAQAMAT[0].root; manualEdit=false;
+  applyMaqam(true);
+  transpose=0; octave=0; sel=null; undoS=[]; brWarned=false;
+  mode="bend"; bendRange=2; chSpan=16; wheelOn=true; wheelRange=2; wheelRaw=0;
+  el("wheel").value="1"; el("wrange").value="2"; dch=0; count=0; tName="Default.Template";
+  el("maqSel").value=0; el("rootSel").value=rootPc;
+  el("mode").value="bend"; el("brange").value="2"; el("span").value="16";
+  el("dev").value="casio"; el("dch").value=0; el("dpg").value=0; el("dbm").value=0; el("dbl").value=0;
+  el("oc").value=0; el("ocv").textContent="0";
+  ["c7","c91","c93","c10"].forEach((id,i)=>{const v=[100,40,0,64][i];el(id).value=v;el(id+"v").textContent=v;});
+  midiLog=false; el("bMidiLog").textContent=T("midiLog")+"OFF";
+  autoRestore=true; el("bAuto").textContent=T("autoR")+"ON";
+  LOG.length=0; errCount=0; el("errBadge").style.display="none";
+  applyDev(); resetPool(); setTranspose(0,false); drawInstr();
+  renderMaqam(); drawKb(); head(); drawLog();
+  el("mon").className="mon idle"; el("mon").textContent=T("waiting");
+  upd(); L("i","MASTER RESET — all settings back to defaults");
+  ksMsg(T("resetDone"));
+}
+el("bMaster").onclick=masterReset;
+
+/* ============ INIT ============ */
+drawLog();L("i","app started — build 2026.08.26");
+fillMaq();fillRoots();fillDev();applyDev();applyMaqam(true);renderMaqam();drawKb();head();fillTpl();drawInstr();showPlatform();
+if(isUnsafe()){showStuck(true);L("w","previous session ended with device engine muted");}
+let L0="ar";try{L0=localStorage.getItem("qt_lang")||(navigator.language||"ar").slice(0,2);}catch(e){}
+if(L0!=="ar"&&L0!=="en")L0="en";
+el("lang").value=L0;el("lang").onchange=ev=>setLang(ev.target.value);
+setLang(L0);
+el("info").className="warn info show";
+el("info").innerHTML="وضع <b>Pitch-Bend</b>: كل نوتة على قناة منفصلة مع انحناء دقيق. يعمل مع أغلب الأجهزة بدون إعدادات.";
+if(!window.isSecureContext){const w=el("warn");w.className="warn err show";
+ w.innerHTML=T("notSecure");}
+</script>
+
+</html>
